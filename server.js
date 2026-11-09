@@ -647,7 +647,7 @@ function serveFile(res, filename, contentType) {
     res.writeHead(200, {
       'Content-Type': contentType || MIME_TYPES[path.extname(filePath)] || 'application/octet-stream',
       'Content-Length': stats.size,
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-store',
     });
     fs.createReadStream(filePath).pipe(res);
   });
