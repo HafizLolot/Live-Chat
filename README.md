@@ -17,6 +17,35 @@ Website live chat dengan panel admin realtime. Dibina menggunakan Node.js tanpa 
 
 Tidak perlu `npm install`.
 
+## Deploy ke Render
+
+Aplikasi ini memerlukan pelayan Node.js (SSE + API), jadi **tidak boleh** dihoskan di Netlify sebagai laman statik. Gunakan Render:
+
+1. Push projek ini ke repositori GitHub.
+2. Di [Render Dashboard](https://dashboard.render.com), klik **New +** → **Blueprint**, kemudian pilih repositori tersebut. Fail `render.yaml` akan dikesan secara automatik.
+3. Jika diminta, masukkan nilai **ADMIN_PASSWORD** (kata laluan admin yang kukuh). Ini penting supaya kata laluan kekal sama setiap kali deploy.
+4. Klik **Apply** dan tunggu deploy selesai. Render akan memberikan URL seperti `https://halodesk-livechat.onrender.com`.
+5. Buka URL tersebut untuk pelanggan, dan `https://.../LivechatAdmin` untuk panel admin.
+
+Tanpa `render.yaml`, anda juga boleh cipta **Web Service** secara manual dengan tetapan:
+
+- Runtime: **Node**
+- Build command: `npm install --omit=dev`
+- Start command: `node server.js`
+- Environment variable: `ADMIN_PASSWORD`
+
+### Penyimpanan data di Render
+
+Pelayan membaca `PORT` dan `HOST` daripada environment, jadi ia terus berfungsi di Render.
+
+Secara lalai data disimpan dalam folder `data/`. Pada pelan **Free**, storan Render adalah sementara — `data/chats.json` dan `data/admin-auth.json` akan hilang apabila servis restart, deploy semula, atau tidur kerana tidak aktif. Untuk penyimpanan kekal:
+
+1. Naik taraf servis ke pelan berbayar (Starter).
+2. Tambah **Disk** dengan mount path `/var/data`.
+3. Tetapkan environment variable `DATA_DIR` kepada `/var/data`.
+
+Dengan cara itu semua perbualan dan tetapan admin kekal walaupun servis dimulakan semula.
+
 ## Cara guna
 
 1. Buka laman pelanggan, masukkan nama, kemudian mulakan perbualan.
@@ -75,6 +104,8 @@ Semua perbualan disimpan di:
 ```text
 data/chats.json
 ```
+
+Lokasi folder `data/` boleh ditukar dengan menetapkan environment variable `DATA_DIR` (contohnya `/var/data` semasa menggunakan Render Disk).
 
 Fail ini dicipta secara automatik apabila mesej pertama masuk. Untuk sandaran, salin fail tersebut.
 
