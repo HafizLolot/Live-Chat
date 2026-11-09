@@ -39,6 +39,8 @@
     quickReplies: document.getElementById('quickReplies'),
     adminMessageForm: document.getElementById('adminMessageForm'),
     adminMessageInput: document.getElementById('adminMessageInput'),
+    adminAttachButton: document.getElementById('adminAttachButton'),
+    adminFileInput: document.getElementById('adminFileInput'),
     adminSendButton: document.getElementById('adminSendButton'),
     messageCount: document.getElementById('messageCount'),
     toast: document.getElementById('toast'),
@@ -479,6 +481,11 @@
   function previewText(chat) {
     const message = lastMessage(chat);
     if (!message) return 'Belum ada mesej';
+    if (message.attachment) {
+      const label = message.attachment.kind === 'video' ? '🎥 Video' : '📷 Gambar';
+      if (message.sender === 'admin') return `Anda: ${label}`;
+      return label;
+    }
     if (message.sender === 'admin') return `Anda: ${message.text}`;
     return message.text;
   }
@@ -558,7 +565,8 @@
       if (!query) return true;
       if (chat.name.toLowerCase().includes(query)) return true;
       return (chat.messages || []).some((message) =>
-        message.text.toLowerCase().includes(query)
+        (message.text || '').toLowerCase().includes(query) ||
+        (message.attachment?.name || '').toLowerCase().includes(query)
       );
     });
   }
@@ -763,6 +771,7 @@
       : 'Tulis balasan untuk pelanggan...';
     el.adminMessageInput.disabled = sending || isClosed;
     el.adminSendButton.disabled = isClosed || !el.adminMessageInput.value.trim() || sending;
+    if (el.adminAttachButton) el.adminAttachButton.disabled = isClosed || sending;
     el.messageCount.textContent = `${chat.messages?.length || 0} mesej`;
 
     renderMessages(chat, previousCount);
@@ -778,6 +787,26 @@
     if (changedChat || forceBottom || nearBottom || (chat.messages?.length || 0) > previousCount) {
       scrollToBottom();
     }
+  }
+
+  function renderAttachment(attachment) {
+    const wrap = makeElement('div', 'media-attachment');
+    if (attachment.kind === 'video') {
+      const video = document.createElement('video');
+      video.src = attachment.url;
+      video.controls = true;
+      video.preload = 'metadata';
+      video.className = 'media-video';
+      wrap.appendChild(video);
+    } else {
+      const img = document.createElement('img');
+      img.src = attachment.url;
+      img.alt = attachment.name || 'Gambar';
+      img.loading = 'lazy';
+      img.className = 'media-image';
+      wrap.appendChild(img);
+    }
+    return wrap;
   }
 
   function renderMessages(chat, previousCount) {
@@ -811,7 +840,12 @@
       }
 
       const content = makeElement('div', 'message-content');
-      content.appendChild(makeElement('div', 'bubble', message.text));
+      if (message.attachment) {
+        content.appendChild(renderAttachment(message.attachment));
+      }
+      if (message.text) {
+        content.appendChild(makeElement('div', 'bubble', message.text));
+      }
       const time = makeElement('div', 'message-time', formatTime(message.createdAt));
       time.title = formatFullDate(message.createdAt);
       content.appendChild(time);
@@ -977,6 +1011,7 @@
     const closed = chat?.status === 'closed';
     input.disabled = sending || closed;
     el.adminSendButton.disabled = closed || !input.value.trim() || sending;
+    if (el.adminAttachButton) el.adminAttachButton.disabled = closed || sending;
   }
 
   function sendTyping(isTyping) {
@@ -1046,6 +1081,53 @@
     }
   }
 
+  async function uploadAdminFile(file) {
+    if (!selectedId || sending) return;
+    const id = selectedId;
+    const chat = chats.get(id);
+    if (chat?.status === 'closed') {
+      showToast('Perbualan telah ditutup. Buka semula untuk membalas.');
+      return;
+    }
+    if (!file) return;
+
+    sending = true;
+    el.adminSendButton.disabled = true;
+    el.adminMessageInput.disabled = true;
+    el.adminAttachButton.disabled = true;
+
+    try {
+      const response = await fetch(
+        `/api/chat/${encodeURIComponent(id)}/upload?sender=admin`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream',
+            'X-File-Name': encodeURIComponent(file.name || 'Fail'),
+          },
+          body: file,
+        }
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Gagal memuat naik fail.');
+      chats.set(data.chat.id, data.chat);
+      renderConversationList();
+      renderChat(false);
+      scrollToBottom();
+    } catch (error) {
+      showToast(error.message || 'Gagal memuat naik fail.');
+    } finally {
+      sending = false;
+      const current = selectedId ? chats.get(selectedId) : null;
+      const closed = current?.status === 'closed';
+      el.adminMessageInput.disabled = closed;
+      el.adminSendButton.disabled = closed || !el.adminMessageInput.value.trim();
+      el.adminAttachButton.disabled = closed;
+      if (!closed) el.adminMessageInput.focus();
+      stopTyping();
+      el.adminFileInput.value = '';
+    }
+  }
   function setConnection(state, text) {
     el.connectionStatus.className = `connection-status ${state}`;
     el.connectionText.textContent = text;
@@ -1189,6 +1271,17 @@
       if (!text) return;
       sendAdminMessage(text);
     });
+
+    if (el.adminAttachButton) {
+      el.adminAttachButton.addEventListener('click', () => {
+        if (sending) return;
+        el.adminFileInput.click();
+      });
+      el.adminFileInput.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (file) uploadAdminFile(file);
+      });
+    }
 
     el.adminMessageInput.addEventListener('input', () => {
       resizeAdminInput();

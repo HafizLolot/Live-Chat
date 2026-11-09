@@ -1439,3 +1439,15 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* ----- Lampiran media ----- */
+.attach-button { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; color: #64796d; background: #f4faf6; border: 1.5px solid #e0e9e3; border-radius: 11px; cursor: pointer; transition: color .15s, border-color .15s, background .15s, transform .12s; }
+.attach-button:hover:not(:disabled) { color: #0c895f; border-color: #cde4d7; background: #eaf4ee; }
+.attach-button:active:not(:disabled) { transform: scale(0.96); }
+.attach-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.attach-button svg { width: 18px; height: 18px; }
+.media-attachment { max-width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 6px; background: #eef3ef; }
+.media-image { display: block; max-width: 100%; max-height: 320px; width: auto; height: auto; object-fit: contain; border-radius: 12px; }
+.media-video { display: block; max-width: 100%; max-height: 320px; width: 100%; border-radius: 12px; background: #000; }
+.message.out .media-attachment { margin-left: auto; }

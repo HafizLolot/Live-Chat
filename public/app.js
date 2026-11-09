@@ -12,7 +12,8 @@
     conversation: document.getElementById('conversation'),
     messages: document.getElementById('messages'),
     composerWrap: document.getElementById('composerWrap'),
-    messageForm: document.getElementById('messageForm'),
+    attachButton: document.getElementById('attachButton'),
+    fileInput: document.getElementById('fileInput'),
     messageInput: document.getElementById('messageInput'),
     sendButton: document.getElementById('sendButton'),
     connectionBanner: document.getElementById('connectionBanner'),
@@ -139,6 +140,7 @@
     elements.closedNote.hidden = !closed;
     elements.messageInput.disabled = closed || sending;
     elements.sendButton.disabled = closed || sending || !elements.messageInput.value.trim();
+    elements.attachButton.disabled = closed || sending;
 
     if (closed) {
       elements.messageInput.placeholder = 'Perbualan telah ditutup';
@@ -190,6 +192,25 @@
     return element;
   }
 
+  function renderAttachment(attachment) {
+    const wrap = makeElement('div', 'media-attachment');
+    if (attachment.kind === 'video') {
+      const video = document.createElement('video');
+      video.src = attachment.url;
+      video.controls = true;
+      video.preload = 'metadata';
+      video.className = 'media-video';
+      wrap.appendChild(video);
+    } else {
+      const img = document.createElement('img');
+      img.src = attachment.url;
+      img.alt = attachment.name || 'Gambar';
+      img.loading = 'lazy';
+      img.className = 'media-image';
+      wrap.appendChild(img);
+    }
+    return wrap;
+  }
   function renderMessages(previousCount = 0) {
     if (!chat) return;
 
@@ -224,7 +245,12 @@
       }
 
       const content = makeElement('div', 'message-content');
-      content.appendChild(makeElement('div', 'bubble', message.text));
+      if (message.attachment) {
+        content.appendChild(renderAttachment(message.attachment));
+      }
+      if (message.text) {
+        content.appendChild(makeElement('div', 'bubble', message.text));
+      }
       content.appendChild(makeElement('div', 'message-time', formatTime(message.createdAt)));
       row.appendChild(content);
       fragment.appendChild(row);
@@ -390,6 +416,48 @@
     }
   }
 
+  async function uploadFile(file) {
+    if (!chatId || sending) return;
+    if (chat?.status === 'closed') {
+      showToast('Perbualan ini telah ditutup. Mulakan perbualan baharu untuk meneruskan.');
+      return;
+    }
+    if (!file) return;
+
+    sending = true;
+    elements.sendButton.disabled = true;
+    elements.messageInput.disabled = true;
+    elements.attachButton.disabled = true;
+
+    try {
+      const response = await fetch(
+        `/api/chat/${encodeURIComponent(chatId)}/upload?sender=visitor`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream',
+            'X-File-Name': encodeURIComponent(file.name || 'Fail'),
+          },
+          body: file,
+        }
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Gagal memuat naik fail.');
+      setChat(data.chat);
+      scrollToBottom();
+    } catch (error) {
+      showToast(error.message || 'Gagal memuat naik fail.');
+    } finally {
+      sending = false;
+      const closed = chat?.status === 'closed';
+      elements.messageInput.disabled = closed;
+      elements.sendButton.disabled = closed || !elements.messageInput.value.trim();
+      elements.attachButton.disabled = closed;
+      if (!closed) elements.messageInput.focus();
+      stopTyping();
+      elements.fileInput.value = '';
+    }
+  }
   function resizeInput() {
     const input = elements.messageInput;
     input.style.height = 'auto';
@@ -483,7 +551,14 @@
       }
     });
 
-    elements.messageInput.addEventListener('blur', stopTyping);
+    elements.attachButton.addEventListener('click', () => {
+      if (chat?.status === 'closed' || sending) return;
+      elements.fileInput.click();
+    });
+    elements.fileInput.addEventListener('change', (event) => {
+      const file = event.target.files?.[0];
+      if (file) uploadFile(file);
+    });
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {

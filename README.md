@@ -46,6 +46,16 @@ Secara lalai data disimpan dalam folder `data/`. Pada pelan **Free**, storan Ren
 
 Dengan cara itu semua perbualan dan tetapan admin kekal walaupun servis dimulakan semula.
 
+## Muat naik gambar & video
+
+Pelanggan dan admin boleh menghantar gambar atau video terus dalam perbualan:
+
+- Butang lampiran (📎) di sebelah kotak mesej.
+- Format disokong: gambar `JPG, PNG, GIF, WEBP, AVIF` dan video `MP4, WEBM, MOV, OGG`.
+- Saiz maksimum: **25 MB** setiap fail.
+- Fail disimpan dalam folder `data/uploads` dengan nama UUID dan disajikan melalui `/uploads/<fail>` (dengan sokongan HTTP Range untuk video).
+- Mesej teks boleh kosong apabila terdapat lampiran.
+
 ## Cara guna
 
 1. Buka laman pelanggan, masukkan nama, kemudian mulakan perbualan.

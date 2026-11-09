@@ -26,6 +26,22 @@ const HOST = process.env.HOST || '0.0.0.0';
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_NAME_LENGTH = 50;
 const MAX_MESSAGES_PER_CHAT = 1500;
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
+const UPLOAD_TYPES = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/gif': '.gif',
+  'image/webp': '.webp',
+  'image/avif': '.avif',
+  'video/mp4': '.mp4',
+  'video/webm': '.webm',
+  'video/quicktime': '.mov',
+  'video/ogg': '.ogv',
+};
+const MIME_BY_UPLOAD_EXT = Object.fromEntries(
+  Object.entries(UPLOAD_TYPES).map(([type, ext]) => [ext.slice(1), type])
+);
 
 const ADMIN_PASSWORD_ENV = typeof process.env.ADMIN_PASSWORD === 'string'
   ? process.env.ADMIN_PASSWORD
@@ -63,6 +79,22 @@ const STATIC_FILES = new Set([
 // ---------------------------------------------------------------------------
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+function normalizeAttachment(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const url = typeof raw.url === 'string' ? raw.url : '';
+  if (!/^\/uploads\/[A-Za-z0-9-]+\.[a-z0-9]+$/.test(url)) return null;
+  const type = typeof raw.type === 'string' ? raw.type.slice(0, 100) : '';
+  const kind = raw.kind === 'video' ? 'video' : 'image';
+  return {
+    url,
+    type,
+    kind,
+    name: typeof raw.name === 'string' ? raw.name.slice(0, 120) : 'Fail',
+    size: Math.max(0, Number(raw.size) || 0),
+  };
+}
 
 function normalizeChat(raw) {
   if (!raw || typeof raw !== 'object') return null;
@@ -71,17 +103,26 @@ function normalizeChat(raw) {
 
   const messages = Array.isArray(raw.messages)
     ? raw.messages
-        .filter((message) => message && typeof message.text === 'string')
+        .filter(
+          (message) =>
+            message &&
+            (typeof message.text === 'string' || normalizeAttachment(message.attachment))
+        )
         .map((message) => ({
           id: typeof message.id === 'string' ? message.id : crypto.randomUUID(),
           sender: ['visitor', 'admin', 'system'].includes(message.sender)
             ? message.sender
             : 'visitor',
-          text: message.text.slice(0, MAX_MESSAGE_LENGTH),
+          text:
+            typeof message.text === 'string'
+              ? message.text.slice(0, MAX_MESSAGE_LENGTH)
+              : '',
+          attachment: normalizeAttachment(message.attachment),
           createdAt: isValidDate(message.createdAt)
             ? message.createdAt
             : new Date().toISOString(),
         }))
+        .filter((message) => message.text || message.attachment)
         .slice(-MAX_MESSAGES_PER_CHAT)
     : [];
 
@@ -549,6 +590,34 @@ function readJsonBody(req, limit = 64 * 1024) {
   });
 }
 
+function readBodyBuffer(req, limit) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    let tooLarge = false;
+
+    req.on('data', (chunk) => {
+      if (tooLarge) return;
+      size += chunk.length;
+      if (size > limit) {
+        tooLarge = true;
+        chunks.length = 0;
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      if (tooLarge) {
+        return reject(
+          Object.assign(new Error('Fail terlalu besar. Maksimum 25 MB.'), { status: 413 })
+        );
+      }
+      resolve(Buffer.concat(chunks));
+    });
+    req.on('error', reject);
+  });
+}
+
 function cleanText(value, maxLength) {
   if (typeof value !== 'string') return '';
   return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').trim().slice(0, maxLength);
@@ -604,6 +673,68 @@ function serveStatic(res, pathname) {
 <title>404 — HaloDesk</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f2f7f4;color:#14251f;font-family:system-ui,sans-serif}main{text-align:center;padding:32px}a{color:#0c895f;font-weight:700;text-decoration:none}span{display:block;font-size:5rem;font-weight:800;color:#bcd9cc;line-height:1}</style>
 </head><body><main><span>404</span><h1>Halaman tidak ditemui</h1><p><a href="/">Kembali ke sembang langsung</a></p></main></body></html>`);
+}
+
+function serveUpload(req, res, pathname) {
+  const name = pathname.slice('/uploads/'.length);
+  if (!/^[A-Za-z0-9-]+\.[a-z0-9]+$/.test(name)) {
+    return sendError(res, 404, 'Fail tidak ditemui.');
+  }
+
+  const filePath = path.join(UPLOAD_DIR, name);
+  const ext = path.extname(name).slice(1).toLowerCase();
+  const contentType = MIME_BY_UPLOAD_EXT[ext] || 'application/octet-stream';
+
+  fs.stat(filePath, (error, stats) => {
+    if (error || !stats.isFile()) return sendError(res, 404, 'Fail tidak ditemui.');
+
+    const headers = {
+      'Content-Type': contentType,
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'X-Content-Type-Options': 'nosniff',
+    };
+
+    const rangeHeader = req.headers.range;
+    if (rangeHeader) {
+      const match = /^bytes=(\d*)-(\d*)$/.exec(String(rangeHeader).trim());
+      if (match) {
+        let start = match[1] === '' ? null : Number(match[1]);
+        let end = match[2] === '' ? null : Number(match[2]);
+
+        if (start === null && end !== null) {
+          start = Math.max(0, stats.size - end);
+          end = stats.size - 1;
+        } else if (start !== null && end === null) {
+          end = stats.size - 1;
+        }
+
+        if (
+          start !== null &&
+          end !== null &&
+          Number.isFinite(start) &&
+          Number.isFinite(end) &&
+          start <= end &&
+          start < stats.size
+        ) {
+          end = Math.min(end, stats.size - 1);
+          headers['Content-Range'] = `bytes ${start}-${end}/${stats.size}`;
+          headers['Content-Length'] = end - start + 1;
+          res.writeHead(206, headers);
+          if (req.method === 'HEAD') return res.end();
+          return fs.createReadStream(filePath, { start, end }).pipe(res);
+        }
+
+        res.writeHead(416, { 'Content-Range': `bytes */${stats.size}` });
+        return res.end();
+      }
+    }
+
+    headers['Content-Length'] = stats.size;
+    res.writeHead(200, headers);
+    if (req.method === 'HEAD') return res.end();
+    fs.createReadStream(filePath).pipe(res);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -828,6 +959,102 @@ async function handleApi(req, res, url) {
     return sendJson(res, 201, { chat: publicChat(chat) });
   }
 
+  // Muat naik gambar / video
+  const uploadMatch = pathname.match(/^\/api\/chat\/([^/]+)\/upload$/);
+  if (uploadMatch && method === 'POST') {
+    const chat = findChat(decodeURIComponent(uploadMatch[1]));
+    if (!chat) return sendError(res, 404, 'Perbualan tidak ditemui.');
+
+    const senderParam = searchParams.get('sender');
+    const sender =
+      senderParam === 'admin' ? 'admin' : senderParam === 'visitor' ? 'visitor' : null;
+    if (!sender) return sendError(res, 400, 'Pengirim tidak sah.');
+    if (sender === 'admin' && !requireAdmin(req, res)) return;
+
+    if (chat.status === 'closed') {
+      return sendError(
+        res,
+        409,
+        'Perbualan ini sudah ditutup. Buka semula sebelum menghantar fail.'
+      );
+    }
+
+    const contentType = String(req.headers['content-type'] || '')
+      .split(';')[0]
+      .trim()
+      .toLowerCase();
+    const ext = UPLOAD_TYPES[contentType];
+    if (!ext) {
+      return sendError(
+        res,
+        415,
+        'Jenis fail tidak disokong. Gunakan gambar (JPG, PNG, GIF, WEBP, AVIF) atau video (MP4, WEBM, MOV, OGG).'
+      );
+    }
+
+    const declared = Number(req.headers['content-length']);
+    if (Number.isFinite(declared) && declared > MAX_UPLOAD_BYTES) {
+      return sendError(res, 413, 'Fail terlalu besar. Maksimum 25 MB.');
+    }
+
+    const buffer = await readBodyBuffer(req, MAX_UPLOAD_BYTES);
+    if (!buffer.length) return sendError(res, 400, 'Fail kosong.');
+
+    let rawName = String(req.headers['x-file-name'] || '');
+    try {
+      rawName = decodeURIComponent(rawName);
+    } catch {
+      // guna nama asal jika tidak dapat dinyahkod
+    }
+    const name =
+      rawName
+        .replace(/[\u0000-\u001F\u007F"\\/]/g, '')
+        .trim()
+        .slice(0, 120) || `Fail${ext}`;
+
+    const storedName = `${crypto.randomUUID()}${ext}`;
+    try {
+      await fs.promises.writeFile(path.join(UPLOAD_DIR, storedName), buffer);
+    } catch (error) {
+      console.error('[upload] Gagal menyimpan fail:', error.message);
+      return sendError(res, 500, 'Gagal menyimpan fail.');
+    }
+
+    const now = new Date().toISOString();
+    const attachment = {
+      url: `/uploads/${storedName}`,
+      type: contentType,
+      kind: contentType.startsWith('video/') ? 'video' : 'image',
+      name,
+      size: buffer.length,
+    };
+
+    chat.messages.push({
+      id: crypto.randomUUID(),
+      sender,
+      text: '',
+      attachment,
+      createdAt: now,
+    });
+    if (chat.messages.length > MAX_MESSAGES_PER_CHAT) {
+      chat.messages = chat.messages.slice(-MAX_MESSAGES_PER_CHAT);
+    }
+
+    chat.updatedAt = now;
+    chat.lastSeen = now;
+    if (sender === 'visitor') {
+      chat.unreadAdmin += 1;
+      chat.unreadVisitor = 0;
+    } else {
+      chat.unreadVisitor += 1;
+      chat.unreadAdmin = 0;
+    }
+
+    saveChatsSoon();
+    broadcastChat(chat);
+    return sendJson(res, 201, { chat: publicChat(chat), attachment });
+  }
+
   // Tanda sudah dibaca
   const readMatch = pathname.match(/^\/api\/chat\/([^/]+)\/read$/);
   if (readMatch && method === 'POST') {
@@ -1046,6 +1273,10 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return sendError(res, 405, 'Kaedah tidak dibenarkan.');
+  }
+
+  if (url.pathname.startsWith('/uploads/')) {
+    return serveUpload(req, res, url.pathname);
   }
 
   serveStatic(res, url.pathname);

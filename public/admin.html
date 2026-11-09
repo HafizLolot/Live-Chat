@@ -192,6 +192,10 @@
             <button type="button" data-reply="Terima kasih kerana menghubungi kami. Semoga hari anda menyenangkan! 🙏">Terima kasih</button>
           </div>
           <form class="admin-composer" id="adminMessageForm" autocomplete="off">
+            <button type="button" class="attach-button" id="adminAttachButton" aria-label="Lampirkan gambar atau video" title="Lampirkan gambar atau video" disabled>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <input type="file" id="adminFileInput" accept="image/*,video/*" hidden>
             <textarea id="adminMessageInput" rows="1" maxlength="2000" placeholder="Tulis balasan untuk pelanggan..." aria-label="Tulis balasan" disabled></textarea>
             <button class="send-button" id="adminSendButton" type="submit" aria-label="Hantar balasan" disabled>
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 3-8.2 18-2.3-7.5L3 11.2 21 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m10.5 13.5 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
