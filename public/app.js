@@ -12,6 +12,7 @@
     conversation: document.getElementById('conversation'),
     messages: document.getElementById('messages'),
     composerWrap: document.getElementById('composerWrap'),
+    messageForm: document.getElementById('messageForm'),
     attachButton: document.getElementById('attachButton'),
     fileInput: document.getElementById('fileInput'),
     messageInput: document.getElementById('messageInput'),
