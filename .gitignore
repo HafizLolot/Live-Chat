@@ -5,4 +5,5 @@ node_modules/
 # Data sensitif / runtime — jangan commit ke GitHub
 data/chats.json
 data/ADMIN-PASSWORD.txt
+data/admin-sessions.json
 data/uploads/

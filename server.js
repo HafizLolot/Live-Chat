@@ -21,6 +21,7 @@ const DATA_DIR = process.env.DATA_DIR
 const DATA_FILE = path.join(DATA_DIR, 'chats.json');
 const AUTH_FILE = path.join(DATA_DIR, 'admin-auth.json');
 const GENERATED_PASSWORD_FILE = path.join(DATA_DIR, 'ADMIN-PASSWORD.txt');
+const SESSIONS_FILE = path.join(DATA_DIR, 'admin-sessions.json');
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 const MAX_MESSAGE_LENGTH = 2000;
@@ -47,8 +48,8 @@ const ADMIN_PASSWORD_ENV = typeof process.env.ADMIN_PASSWORD === 'string'
   ? process.env.ADMIN_PASSWORD
   : '';
 const SESSION_COOKIE = 'halodesk_admin';
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // sesi tamat selepas 12 jam tidak aktif
-const SESSION_MAX_MS = 24 * 60 * 60 * 1000; // had mutlak 24 jam
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // sesi tamat selepas 30 hari tidak aktif
+const SESSION_MAX_MS = 30 * 24 * 60 * 60 * 1000; // had mutlak 30 hari
 const LOGIN_WINDOW_MS = 10 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 8;
 const LOGIN_BLOCK_MS = 15 * 60 * 1000;
@@ -214,6 +215,40 @@ let adminAuthFromEnv = ADMIN_PASSWORD_ENV.length > 0;
 
 /** @type {Map<string, {createdAt: number, lastSeen: number}>} */
 const adminSessions = new Map();
+
+function loadAdminSessions() {
+  try {
+    if (!fs.existsSync(SESSIONS_FILE)) return;
+    const parsed = JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf8'));
+    if (!Array.isArray(parsed)) return;
+    const now = Date.now();
+    for (const item of parsed) {
+      if (!item || typeof item.token !== 'string') continue;
+      const createdAt = Number(item.createdAt);
+      const lastSeen = Number(item.lastSeen);
+      if (!Number.isFinite(createdAt) || !Number.isFinite(lastSeen)) continue;
+      if (now - lastSeen > SESSION_TTL_MS || now - createdAt > SESSION_MAX_MS) continue;
+      adminSessions.set(item.token, { createdAt, lastSeen });
+    }
+  } catch (error) {
+    console.error('[auth] Gagal memuatkan sesi admin:', error.message);
+  }
+}
+
+loadAdminSessions();
+
+function saveAdminSessions() {
+  try {
+    const data = [...adminSessions.entries()].map(([token, session]) => ({
+      token,
+      createdAt: session.createdAt,
+      lastSeen: session.lastSeen,
+    }));
+    fs.writeFileSync(SESSIONS_FILE, JSON.stringify(data), 'utf8');
+  } catch (error) {
+    console.error('[auth] Gagal menyimpan sesi admin:', error.message);
+  }
+}
 /** @type {Map<string, {count: number, firstAt: number, blockedUntil: number}>} */
 const loginAttempts = new Map();
 
@@ -373,6 +408,7 @@ function createAdminSession() {
   const token = crypto.randomBytes(32).toString('base64url');
   const now = Date.now();
   adminSessions.set(token, { createdAt: now, lastSeen: now });
+  saveAdminSessions();
   return token;
 }
 
@@ -386,10 +422,13 @@ function getAdminSession(req) {
   const now = Date.now();
   if (now - session.lastSeen > SESSION_TTL_MS || now - session.createdAt > SESSION_MAX_MS) {
     adminSessions.delete(token);
+    saveAdminSessions();
     return null;
   }
 
+  const shouldPersist = now - session.lastSeen > 5 * 60 * 1000;
   session.lastSeen = now;
+  if (shouldPersist) saveAdminSessions();
   return { token, createdAt: session.createdAt, lastSeen: session.lastSeen };
 }
 
@@ -444,11 +483,14 @@ function clearLoginFailures(ip) {
 
 const authCleanup = setInterval(() => {
   const now = Date.now();
+  let changed = false;
   for (const [token, session] of adminSessions) {
     if (now - session.lastSeen > SESSION_TTL_MS || now - session.createdAt > SESSION_MAX_MS) {
       adminSessions.delete(token);
+      changed = true;
     }
   }
+  if (changed) saveAdminSessions();
   for (const [ip, entry] of loginAttempts) {
     const expired = entry.blockedUntil ? entry.blockedUntil <= now : now - entry.firstAt > LOGIN_WINDOW_MS;
     if (expired) loginAttempts.delete(ip);
@@ -799,7 +841,10 @@ async function handleApi(req, res, url) {
 
   if (pathname === '/api/admin/logout' && method === 'POST') {
     const token = parseCookies(req.headers.cookie).get(SESSION_COOKIE);
-    if (token) adminSessions.delete(token);
+    if (token) {
+    adminSessions.delete(token);
+    saveAdminSessions();
+  }
     res.setHeader('Set-Cookie', clearSessionCookie(req));
     return sendJson(res, 200, { ok: true });
   }
@@ -848,6 +893,7 @@ async function handleApi(req, res, url) {
     }
 
     adminSessions.clear();
+    saveAdminSessions();
     res.setHeader('Set-Cookie', clearSessionCookie(req));
     return sendJson(res, 200, { ok: true, reauth: true });
   }
@@ -1295,6 +1341,7 @@ server.listen(PORT, HOST, () => {
 function shutdown() {
   console.log('\nMenyimpan data dan menutup pelayan...');
   saveChatsNow();
+  saveAdminSessions();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 3000).unref();
 }
