@@ -1,0 +1,14 @@
+{
+  "name": "halodesk-livechat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Website live chat ringan dengan panel admin realtime.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

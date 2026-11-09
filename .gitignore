@@ -1,0 +1,8 @@
+node_modules/
+.env
+*.log
+
+# Data sensitif / runtime — jangan commit ke GitHub
+data/chats.json
+data/admin-auth.json
+data/ADMIN-PASSWORD.txt

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f7d59">
+  <meta name="description" content="HaloDesk — sembang langsung dengan pasukan sokongan kami. Pantas, mesra dan tanpa kerumitan.">
+  <title>HaloDesk — Live Chat</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <section class="story" aria-label="Tentang HaloDesk">
+      <a class="brand" href="/" aria-label="HaloDesk">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M7 9.5C7 7.57 8.57 6 10.5 6h11C23.43 6 25 7.57 25 9.5v8c0 1.93-1.57 3.5-3.5 3.5H15l-5.4 4.05c-.66.5-1.6.03-1.6-.8V20.7A3.5 3.5 0 0 1 7 17.5v-8Z" fill="currentColor"/>
+            <circle cx="12.5" cy="13.5" r="1.35" fill="#C9F27C"/>
+            <circle cx="16" cy="13.5" r="1.35" fill="#C9F27C"/>
+            <circle cx="19.5" cy="13.5" r="1.35" fill="#C9F27C"/>
+          </svg>
+        </span>
+        <span>HaloDesk</span>
+      </a>
+
+      <div class="story-content">
+        <div class="eyebrow"><span class="live-dot"></span> Pasukan sokongan sedang online</div>
+        <h1>Perlukan bantuan?<br><span>Sembang terus</span> dengan kami.</h1>
+        <p class="story-copy">Pasukan kami sedia membantu soalan, masalah, mahupun sekadar menyapa. Mulakan perbualan dan dapatkan jawapan tanpa perlu menunggu lama.</p>
+
+        <ul class="highlights" aria-label="Kelebihan perkhidmatan">
+          <li>
+            <span class="highlight-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2 4.5 13h6L10 22l9.5-11h-6L13 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            </span>
+            <span><strong>Respons pantas</strong><small>Purata dibalas dalam 2 minit</small></span>
+          </li>
+          <li>
+            <span class="highlight-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 11a4 4 0 1 1 8 0c0 2-1.2 2.6-2.4 3.6-1 .9-1.6 1.7-1.6 3.4M12 21h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4.5 20a8.4 8.4 0 0 1-1.4-6.7M19.5 20a8.4 8.4 0 0 0 1.4-6.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </span>
+            <span><strong>Mesra &amp; profesional</strong><small>Dibantu terus oleh manusia</small></span>
+          </li>
+          <li>
+            <span class="highlight-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8 7 10 4.1-2 7-5.4 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span><strong>Privasi terpelihara</strong><small>Perbualan hanya untuk keperluan anda</small></span>
+          </li>
+        </ul>
+      </div>
+
+      <footer class="story-footer">
+        <div class="mini-faces" aria-hidden="true"><span>AR</span><span>DN</span><span>MS</span></div>
+        <p><strong>2,400+ perbualan</strong><br>telah kami bantu dengan senang hati.</p>
+      </footer>
+    </section>
+
+    <section class="chat-shell" aria-label="Jendela live chat">
+      <header class="chat-head">
+        <div class="agent">
+          <div class="agent-avatar">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 21a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span class="agent-presence" id="agentStatusDot"></span>
+          </div>
+          <div>
+            <h2>HaloDesk Support</h2>
+            <p class="agent-status" id="agentStatusText"><span></span> Online — kami sedia membantu</p>
+          </div>
+        </div>
+        <div class="chat-head-right">
+          <span class="secure-pill" title="Perbualan disimpan dengan selamat">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10" stroke="currentColor" stroke-width="1.7"/></svg>
+            Selamat
+          </span>
+        </div>
+      </header>
+
+      <div class="connection-banner" id="connectionBanner" hidden>
+        <span class="connection-spinner" aria-hidden="true"></span>
+        <span id="connectionBannerText">Menyambung semula...</span>
+      </div>
+
+      <main class="chat-body" id="chatBody">
+        <section class="start-screen" id="startScreen">
+          <div class="welcome-art" aria-hidden="true">
+            <span class="art-ring ring-one"></span>
+            <span class="art-ring ring-two"></span>
+            <span class="art-spark spark-one"></span>
+            <span class="art-spark spark-two"></span>
+            <div class="art-avatar">
+              <svg viewBox="0 0 48 48" fill="none">
+                <path d="M11 16.5A6.5 6.5 0 0 1 17.5 10h13a6.5 6.5 0 0 1 6.5 6.5v9a6.5 6.5 0 0 1-6.5 6.5H24l-7.8 5.8c-1 .75-2.42.04-2.42-1.2V30.2A6.5 6.5 0 0 1 11 25.5v-9Z" fill="currentColor"/>
+                <path d="M17 20.5h14M17 25h9" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <span class="start-kicker">Live chat</span>
+          <h2>Hai, ada yang boleh<br>kami bantu? 👋</h2>
+          <p class="start-copy">Tulis nama anda dahulu. Nanti kami sambungkan ke pasukan sokongan yang sedia membantu.</p>
+
+          <form id="startForm" class="start-form" autocomplete="off">
+            <label for="visitorName">Nama anda</label>
+            <div class="name-field">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 21a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <input id="visitorName" name="name" type="text" maxlength="50" placeholder="Contoh: Ahmad" required autocomplete="name">
+            </div>
+            <button class="primary-button" type="submit" id="startButton">
+              <span>Mulakan perbualan</span>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </form>
+
+          <p class="privacy-note">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8 7 10 4.1-2 7-5.4 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            Dengan memulakan chat, anda bersetuju perbualan ini disimpan untuk keperluan perkhidmatan.
+          </p>
+        </section>
+
+        <section class="conversation" id="conversation" hidden>
+          <div class="messages" id="messages" aria-live="polite" aria-label="Mesej perbualan"></div>
+          <div class="typing-row" id="visitorTyping" hidden>
+            <div class="typing-bubble"><span></span><span></span><span></span></div>
+            <small>Pasukan sokongan sedang menaip...</small>
+          </div>
+        </section>
+      </main>
+
+      <footer class="composer-wrap" id="composerWrap" hidden>
+        <div class="closed-note" id="closedNote" hidden>
+          <div class="closed-note-copy">
+            <strong>Perbualan ini telah ditutup.</strong>
+            <span>Mulakan perbualan baharu untuk menghubungi kami lagi.</span>
+          </div>
+          <button class="new-chat-button" id="newChatButton" type="button">Mulakan baharu</button>
+        </div>
+        <form class="composer" id="messageForm" autocomplete="off">
+          <textarea id="messageInput" rows="1" maxlength="2000" placeholder="Tulis mesej..." aria-label="Tulis mesej" disabled></textarea>
+          <button type="submit" class="send-button" id="sendButton" aria-label="Hantar mesej" disabled>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 3-8.2 18-2.3-7.5L3 11.2 21 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m10.5 13.5 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </form>
+        <div class="composer-meta">
+          <span>Tekan <kbd>Enter</kbd> untuk hantar</span>
+          <span class="realtime-pill"><span></span> Realtime</span>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
