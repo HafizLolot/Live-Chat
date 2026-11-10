@@ -193,11 +193,13 @@
   }
 
   function applyAuthMode(data) {
-    authMode = data?.authMode === 'env' ? 'env' : 'stored';
-    el.changePasswordButton.hidden = authMode === 'env';
+    authMode = data?.authMode === 'env' ? 'env' : data?.authMode === 'disabled' ? 'disabled' : 'stored';
+    el.changePasswordButton.hidden = authMode === 'env' || authMode === 'disabled';
     el.changePasswordButton.title =
       authMode === 'env'
         ? 'Kata laluan dikendalikan melalui ADMIN_PASSWORD di pelayan'
+        : authMode === 'disabled'
+        ? 'Perlindungan kata laluan dimatikan'
         : 'Tukar kata laluan admin';
   }
 

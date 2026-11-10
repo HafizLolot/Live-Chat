@@ -47,6 +47,8 @@ const MIME_BY_UPLOAD_EXT = Object.fromEntries(
 const ADMIN_PASSWORD_ENV = typeof process.env.ADMIN_PASSWORD === 'string'
   ? process.env.ADMIN_PASSWORD
   : '';
+const ADMIN_AUTH_REQUIRED =
+  process.env.ADMIN_AUTH_REQUIRED === 'true' || process.env.ADMIN_AUTH_REQUIRED === '1';
 const SESSION_COOKIE = 'halodesk_admin';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // sesi tamat selepas 30 hari tidak aktif
 const SESSION_MAX_MS = 30 * 24 * 60 * 60 * 1000; // had mutlak 30 hari
@@ -433,6 +435,7 @@ function getAdminSession(req) {
 }
 
 function requireAdmin(req, res) {
+  if (!ADMIN_AUTH_REQUIRED) return { token: 'open', createdAt: 0, lastSeen: Date.now() };
   const session = getAdminSession(req);
   if (session) return session;
   sendError(res, 401, 'Sesi admin tidak sah. Sila log masuk semula.');
@@ -800,6 +803,13 @@ async function handleApi(req, res, url) {
   // ----- Pengesahan admin -------------------------------------------------
 
   if (pathname === '/api/admin/session' && method === 'GET') {
+    if (!ADMIN_AUTH_REQUIRED) {
+      return sendJson(res, 200, {
+        authenticated: true,
+        authMode: 'disabled',
+        temporary: false,
+      });
+    }
     const session = getAdminSession(req);
     return sendJson(res, 200, {
       authenticated: Boolean(session),
@@ -809,6 +819,15 @@ async function handleApi(req, res, url) {
   }
 
   if (pathname === '/api/admin/login' && method === 'POST') {
+    if (!ADMIN_AUTH_REQUIRED) {
+      return sendJson(res, 200, {
+        ok: true,
+        authenticated: true,
+        authMode: 'disabled',
+        temporary: false,
+        expiresAt: new Date(Date.now() + SESSION_MAX_MS).toISOString(),
+      });
+    }
     const ip = clientIp(req);
     const rate = checkLoginRate(ip);
     if (rate.blocked) {

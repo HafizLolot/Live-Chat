@@ -46,7 +46,19 @@ Secara lalai data disimpan dalam folder `data/`. Pada pelan **Free**, storan Ren
 
 Dengan cara itu semua perbualan dan tetapan admin kekal walaupun servis dimulakan semula.
 
-## Muat naik gambar & video
+## Akses admin tanpa kata laluan
+
+Secara lalai, panel admin **tidak memerlukan kata laluan** (mod terbuka). Ini memudahkan penggunaan peribadi, tetapi **tidak selamat untuk produksi awam**.
+
+Untuk mengaktifkan semula perlindungan kata laluan, tetapkan environment variable:
+
+```text
+ADMIN_AUTH_REQUIRED=true
+```
+
+dan (pilihan) `ADMIN_PASSWORD`. Selepas itu, panel admin akan meminta kata laluan seperti biasa.
+
+> ⚠️ Jika anda hoskan aplikasi ini untuk umum, sangat disyorkan aktifkan `ADMIN_AUTH_REQUIRED=true`.
 
 Pelanggan dan admin boleh menghantar gambar atau video terus dalam perbualan:
 
