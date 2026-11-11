@@ -3,15 +3,15 @@
   --ink-soft: #31473e;
   --muted: #6c7e75;
   --muted-light: #91a39a;
-  --brand: #0f845f;
-  --brand-dark: #076646;
-  --brand-deep: #093f2e;
-  --mint: #c9f27c;
-  --mint-soft: #eaf8d8;
+  --brand: #ff6a00;
+  --brand-dark: #e65100;
+  --brand-deep: #b34700;
+  --mint: #ffcc80;
+  --mint-soft: #fff3e0;
   --surface: #ffffff;
-  --surface-soft: #f4f8f5;
-  --line: #e1ebe5;
-  --line-strong: #d4e2da;
+  --surface-soft: #fff8f0;
+  --line: #ffe0cc;
+  --line-strong: #ffd0b0;
   --danger: #c24646;
   --shadow: 0 32px 80px -26px rgba(8, 55, 39, 0.34), 0 8px 24px -12px rgba(8, 55, 39, 0.14);
   --font: "Segoe UI Variable Display", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
@@ -1451,3 +1451,7 @@ a {
 .media-image { display: block; max-width: 100%; max-height: 320px; width: auto; height: auto; object-fit: contain; border-radius: 12px; }
 .media-video { display: block; max-width: 100%; max-height: 320px; width: 100%; border-radius: 12px; background: #000; }
 .message.out .media-attachment { margin-left: auto; }
+
+
+.brand-logo { height: 34px; width: auto; display: block; }
+.brand { gap: 10px; }

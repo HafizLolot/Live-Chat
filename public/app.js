@@ -2,12 +2,14 @@
 
 (() => {
   const STORAGE_KEY = 'halodesk.chatId';
-  const BASE_TITLE = 'HaloDesk — Live Chat';
+  const BASE_TITLE = 'FF Support — Laporkan Hacker & Masalah Game';
 
   const elements = {
     startScreen: document.getElementById('startScreen'),
     startForm: document.getElementById('startForm'),
     visitorName: document.getElementById('visitorName'),
+    gameId: document.getElementById('gameId'),
+    reportCategory: document.getElementById('reportCategory'),
     startButton: document.getElementById('startButton'),
     conversation: document.getElementById('conversation'),
     messages: document.getElementById('messages'),
@@ -496,10 +498,11 @@
     elements.startForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const name = elements.visitorName.value.trim();
-      if (!name) {
-        elements.visitorName.focus();
-        return;
-      }
+      const gameId = elements.gameId?.value.trim() || '';
+      const category = elements.reportCategory?.value || '';
+      if (!name) { elements.visitorName.focus(); return; }
+      if (!gameId) { elements.gameId.focus(); return; }
+      if (!category) { elements.reportCategory.focus(); return; }
 
       elements.startButton.disabled = true;
       const label = elements.startButton.querySelector('span');
@@ -509,7 +512,7 @@
       try {
         const data = await api('/api/chats', {
           method: 'POST',
-          body: JSON.stringify({ name }),
+          body: JSON.stringify({ name, gameId, category }),
         });
         chat = data.chat;
         chatId = data.chat.id;

@@ -1,7 +1,7 @@
 'use strict';
 
 (() => {
-  const BASE_TITLE = 'LiveChat Admin — HaloDesk';
+  const BASE_TITLE = 'FF Support Admin';
   const SOUND_KEY = 'halodesk.sound';
   const TONE_CLASSES = ['tone-1', 'tone-2', 'tone-3', 'tone-4', 'tone-5', 'tone-6'];
 
@@ -746,7 +746,7 @@
     el.personMeta.append(
       dot,
       document.createTextNode(
-        chat.online ? 'Online sekarang' : 'Tidak online • mesej tetap disimpan'
+        `${chat.gameId ? 'ID: ' + chat.gameId + ' • ' : ''}${chat.category ? chat.category + ' • ' : ''}${chat.online ? 'Online sekarang' : 'Tidak online'}`
       )
     );
 

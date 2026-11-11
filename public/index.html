@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0f7d59">
-  <meta name="description" content="HaloDesk — sembang langsung dengan pasukan sokongan kami. Pantas, mesra dan tanpa kerumitan.">
-  <title>HaloDesk — Live Chat</title>
+  <meta name="description" content="FF Support — laporkan hacker, bug dan masalah game Free Fire. Sokongan pantas untuk pemain.">
+  <title>FF Support — Laporkan Hacker & Masalah Game</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/styles.css?v=2">
   <script src="/app.js?v=2" defer></script>
@@ -13,22 +13,15 @@
 <body>
   <div class="page">
     <section class="story" aria-label="Tentang HaloDesk">
-      <a class="brand" href="/" aria-label="HaloDesk">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" fill="none">
-            <path d="M7 9.5C7 7.57 8.57 6 10.5 6h11C23.43 6 25 7.57 25 9.5v8c0 1.93-1.57 3.5-3.5 3.5H15l-5.4 4.05c-.66.5-1.6.03-1.6-.8V20.7A3.5 3.5 0 0 1 7 17.5v-8Z" fill="currentColor"/>
-            <circle cx="12.5" cy="13.5" r="1.35" fill="#C9F27C"/>
-            <circle cx="16" cy="13.5" r="1.35" fill="#C9F27C"/>
-            <circle cx="19.5" cy="13.5" r="1.35" fill="#C9F27C"/>
-          </svg>
-        </span>
-        <span>HaloDesk</span>
+      <a class="brand" href="/" aria-label="Garena Free Fire Support">
+        <img src="/garena-logo.png" alt="Garena" class="brand-logo" />
+        <span>FF Support</span>
       </a>
 
       <div class="story-content">
-        <div class="eyebrow"><span class="live-dot"></span> Pasukan sokongan sedang online</div>
-        <h1>Perlukan bantuan?<br><span>Sembang terus</span> dengan kami.</h1>
-        <p class="story-copy">Pasukan kami sedia membantu soalan, masalah, mahupun sekadar menyapa. Mulakan perbualan dan dapatkan jawapan tanpa perlu menunggu lama.</p>
+        <div class="eyebrow"><span class="live-dot"></span> Pasukan sokongan Free Fire sedang online</div>
+        <h1>Ada masalah dalam game?<br><span>Laporkan di sini</span></h1>
+        <p class="story-copy">Laporkan hacker, bug, masalah akaun atau top-up. Pasukan sokongan kami sedia membantu pemain Free Fire.</p>
 
         <ul class="highlights" aria-label="Kelebihan perkhidmatan">
           <li>
@@ -107,8 +100,27 @@
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 21a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
               <input id="visitorName" name="name" type="text" maxlength="50" placeholder="Contoh: Ahmad" required autocomplete="name">
             </div>
-            <button class="primary-button" type="submit" id="startButton">
-              <span>Mulakan perbualan</span>
+            <label for="gameId">ID Game Free Fire</label>
+             <div class="name-field">
+               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+               <input id="gameId" name="gameId" type="text" maxlength="20" placeholder="Contoh: 123456789" required>
+             </div>
+
+             <label for="reportCategory">Kategori laporan</label>
+             <div class="name-field">
+               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+               <select id="reportCategory" name="category" required style="flex:1;border:none;outline:none;background:transparent;font:inherit;color:inherit;">
+                 <option value="">Pilih kategori</option>
+                 <option value="hacker">Laporan Hacker/Cheat</option>
+                 <option value="bug">Laporan Bug/Glitch</option>
+                 <option value="account">Masalah Akaun</option>
+                 <option value="topup">Masalah Top-Up</option>
+                 <option value="other">Lain-lain</option>
+               </select>
+             </div>
+
+             <button class="primary-button" type="submit" id="startButton">
+              <span>Hantar Laporan</span>
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
           </form>

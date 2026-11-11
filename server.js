@@ -75,6 +75,7 @@ const STATIC_FILES = new Set([
   '/app.js',
   '/admin.js',
   '/favicon.svg',
+  '/garena-logo.png',
 ]);
 
 // ---------------------------------------------------------------------------
@@ -103,6 +104,9 @@ function normalizeChat(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const id = typeof raw.id === 'string' ? raw.id : '';
   if (!id) return null;
+
+  const gameId = typeof raw.gameId === 'string' ? raw.gameId.slice(0, 40) : '';
+  const category = typeof raw.category === 'string' ? raw.category.slice(0, 40) : '';
 
   const messages = Array.isArray(raw.messages)
     ? raw.messages
@@ -139,6 +143,8 @@ function normalizeChat(raw) {
       typeof raw.name === 'string' && raw.name.trim()
         ? raw.name.trim().slice(0, MAX_NAME_LENGTH)
         : 'Tamu',
+    gameId,
+    category,
     createdAt,
     updatedAt: isValidDate(raw.updatedAt)
       ? raw.updatedAt
@@ -930,11 +936,15 @@ async function handleApi(req, res, url) {
     const body = await readJsonBody(req);
     const name = cleanText(body.name, MAX_NAME_LENGTH);
     if (!name) return sendError(res, 400, 'Nama tidak boleh kosong.');
+    const gameId = cleanText(body.gameId, 40);
+    const category = cleanText(body.category, 40);
 
     const now = new Date().toISOString();
     const chat = {
       id: crypto.randomUUID(),
       name,
+      gameId,
+      category,
       createdAt: now,
       updatedAt: now,
       lastSeen: now,
@@ -945,7 +955,7 @@ async function handleApi(req, res, url) {
         {
           id: crypto.randomUUID(),
           sender: 'admin',
-          text: `Hai ${name}! 👋 Selamat datang ke HaloDesk. Ada yang boleh kami bantu hari ini?`,
+          text: `Hai ${name}! 👋 Laporan anda (${category || 'umum'}) untuk ID ${gameId} telah diterima. Pasukan sokongan Free Fire akan menyemak dan membalas sebentar lagi.`,
           createdAt: now,
         },
       ],
